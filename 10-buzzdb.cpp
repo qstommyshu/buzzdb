@@ -12,6 +12,10 @@
 
 enum FieldType { INT, FLOAT, STRING };
 
+// Lecture: Tuple Deletion and Data Consistency
+// The general idea of this file is to add deleteTuple functionality to remove tuple, the issue is it is only deleted 
+// in memory, persisted pages is not reflected.
+
 // Define a basic Field variant class that can hold different types
 class Field {
 public:
@@ -179,10 +183,12 @@ public:
 
         // Update used_size
         auto& tuple = tuples[index];
+        // decrease the used_size for this Page as this Tuple is removed
         used_size -= tuple->getSize();
 
         // Remove tuple from page
         auto it = tuples.begin();
+        // delete tuple from Page Tuples (only in memory)
         tuples.erase(it + index);
     }
 
@@ -306,6 +312,7 @@ int main() {
 
     // PROBLEM: Deletion only in memory, not on disk
     loadedPage->deleteTuple(0);
+    // TODO: so it should delete and then write to disk?
 
     // Deserialize again from disk -- page unchanged
     auto loadedPage2 = Page::deserialize(filename);

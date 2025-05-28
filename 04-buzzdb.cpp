@@ -14,6 +14,10 @@
 #include <string>
 #include <variant>
 
+// Lecture: Tuples and Fields
+// Overall idea in this file: Table is a vector of Tuple, a tuple is a db entry. So Tuple can have
+// multiple fields, field is represented by Field Type.
+
 enum FieldType { INT, FLOAT };
 
 // Define a basic Field variant class that can hold different types
@@ -21,12 +25,14 @@ class Field {
 public:
     FieldType type;
 
+    // allow different datatype to use same memory location
     union {
         int i;
         float f;
     } data;
 
 public:
+    // constructor overloading
     Field(int i) : type(INT) { data.i = i; }
     Field(float f) : type(FLOAT) { data.f = f; }
 
@@ -46,6 +52,8 @@ class Tuple {
     std::vector<Field> fields;
 
 public:
+    // add field to a tuple, so a tuple represents an entry, table is a vector of Tuple.
+    // An entry can have multiple fields like: id, name, age, etc...
     void addField(const Field& field) {
         fields.push_back(field);
     }
@@ -60,6 +68,7 @@ public:
 
 class BuzzDB {
 private:
+    // use map to represent a index on the filed "value" in the table for fast retrieval
     // a map is an ordered key-value container
     std::map<int, std::vector<int>> index;
 
@@ -75,10 +84,12 @@ public:
         float float_val = 132.04;
         Field float_field = Field(float_val);
 
+        // tuple: key, value, float 
         newTuple.addField(key_field);
         newTuple.addField(value_field);
         newTuple.addField(float_field);
 
+        // add the record/entry to the table
         table.push_back(newTuple);
         index[key].push_back(value);
     }

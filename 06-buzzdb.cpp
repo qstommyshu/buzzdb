@@ -10,6 +10,10 @@
 #include <string>
 #include <memory>
 
+// Lecture: Smart Pointers & Smar Fields
+// It uses smart pointers so release memory automatically, DB logic is still the same as 04, 05.
+// unique_ptr emphasize on ownership
+
 enum FieldType { INT, FLOAT, STRING };
 
 // Define a basic Field variant class that can hold different types
@@ -19,6 +23,7 @@ public:
 
     int data_i;
     float data_f;
+    // now string field is used with unique pointer
     std::unique_ptr<char[]> data_s;
     size_t data_s_length;
 
@@ -32,6 +37,8 @@ public:
     }
 
     // Copy assignment operator
+    // Called when an existing object is being assigned the value of another object
+    // Explicitly define copy assignment operator for Field type
     Field& operator=(const Field& other) {
         if (&other == this) {
             return *this;
@@ -54,6 +61,7 @@ public:
     }
 
     // Copy constructor
+    // Called when a new object is being created from an existing object
     Field(Field&& other){
         type = other.type;
 
@@ -135,6 +143,7 @@ public:
     }
 
     // perform a SELECT ... GROUP BY ... SUM query
+    // select sum(value), group by key
     void selectGroupBySum() {
         for (auto const& pair : index) { // for each unique key
             int sum = 0;
@@ -152,7 +161,7 @@ int main() {
 
     BuzzDB db;
 
-    std::ifstream inputFile("output.txt");
+    std::ifstream inputFile("output6.txt");
 
     if (!inputFile) {
         std::cerr << "Unable to open file" << std::endl;
@@ -160,6 +169,7 @@ int main() {
     }
 
     int field1, field2;
+    // TODO: stream extraction operator expects white space as separator
     while (inputFile >> field1 >> field2) {
         db.insert(field1, field2);
     }

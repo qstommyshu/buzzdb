@@ -12,6 +12,10 @@
 
 enum FieldType { INT, FLOAT, STRING };
 
+// Lecture: Page Class + Serialization and Deserialization
+// The general idea of this file is to introduce Page class as units to persistantly store data. Serialize is basically write pages to disk,
+// deserialize is basically read page file from disk
+
 // Define a basic Field variant class that can hold different types
 class Field {
 public:
@@ -102,9 +106,11 @@ public:
 const int PAGE_SIZE = 4096;
 
 // Page class
+// Serve as basic unit of disk storage, the purpose is to provide persitant storage
 class Page {
 public:
     size_t used_size = 0;
+    // Groups tuples together into pages
     std::vector<std::unique_ptr<Tuple>> tuples;
 
     // Add a tuple, returns true if it fits, false otherwise.
@@ -136,6 +142,7 @@ public:
     void write(const std::string& filename) const {
         std::ofstream out(filename);
         // First write the number of tuples.
+        // TODO: what is this? Is it a integer representatio of how many tuples are there as String?
         size_t numTuples = tuples.size();
         out.write(reinterpret_cast<const char*>(&numTuples), sizeof(numTuples));
 
@@ -289,7 +296,7 @@ int main() {
 
     BuzzDB db;
 
-    std::ifstream inputFile("output.txt");
+    std::ifstream inputFile("output8.txt");
 
     if (!inputFile) {
         std::cerr << "Unable to open file" << std::endl;
@@ -303,7 +310,9 @@ int main() {
     
     db.selectGroupBySum();
 
-    std::string filename = "page.dat";
+    // same as previous calculations up to this point
+
+    std::string filename = "page8.dat";
 
     // Serialize to disk
     db.page.write(filename);

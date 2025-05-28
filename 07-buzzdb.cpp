@@ -12,6 +12,9 @@
 
 enum FieldType { INT, FLOAT, STRING };
 
+// Lecture: Smart Fields
+// make Field more generalize
+
 // Define a basic Field variant class that can hold different types
 class Field {
 public:

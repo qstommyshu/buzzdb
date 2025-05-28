@@ -12,6 +12,10 @@
 
 enum FieldType { INT, FLOAT, STRING };
 
+// Lecture: Serialization + Deserialization + Simplifying Page Serialization
+// This is generalization of the serialize and deserialize step from 08 (originaly as: write, read), it was now broken down into multiple layers
+// field looks like this: // field_size(2) type 10 data type 5 data
+
 // Define a basic Field variant class that can hold different types
 class Field {
 public:
@@ -66,6 +70,7 @@ public:
     }
 
     void serialize(std::ofstream& out) {
+        // serialize as: type 10 field_data
         out << type << ' ' << data_length << ' ';
         if (type == STRING) {
             out << data.get() << ' ';
@@ -76,9 +81,14 @@ public:
         }
     }
 
+    // TODO: why this is static?
+    // Factory method, we don't need a Field to use this function, just like static in Java
     static std::unique_ptr<Field> deserialize(std::ifstream& in) {
+        // first get type
         int type; in >> type;
+        // then get length, but looks like it is not used
         size_t length; in >> length;
+        // then get data with unique pointer
         if (type == STRING) {
             std::string val; in >> val;
             return std::make_unique<Field>(val);
@@ -118,6 +128,7 @@ public:
     }
 
     void serialize(std::ofstream& out) {
+        // field_size -> type 10 data -> type 5 data
         out << fields.size() << ' ';
         for (auto& field : fields) {
             field->serialize(out);
@@ -125,6 +136,7 @@ public:
     }
 
     static std::unique_ptr<Tuple> deserialize(std::ifstream& in) {
+        // get field size then get field in for loop
         auto tuple = std::make_unique<Tuple>();
         size_t fieldCount; in >> fieldCount;
         for (size_t i = 0; i < fieldCount; ++i) {

@@ -14,6 +14,10 @@
 #include <string>
 #include <variant>
 
+// Lecture: C++ Constructors and Destructors
+// Overall idea of this file is similar to the previous file, the difference is it added
+// desctructor to dynamically release heap memory when using structure like string.
+
 enum FieldType { INT, FLOAT, STRING };
 
 // Define a basic Field variant class that can hold different types
