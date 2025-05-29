@@ -15,6 +15,12 @@
 
 enum FieldType { INT, FLOAT, STRING };
 
+// Lecture: Storage Manager
+// uses RAII, release resources like file handles to object lifetimes
+// The general idea of this file is to introduce storage manager to handle database backend operations, 
+// this structure separates concerns.
+// Manges the storage operations like write to disk, load. Just like a DBMS engine.
+
 // Define a basic Field variant class that can hold different types
 class Field {
 public:
@@ -284,8 +290,10 @@ public:
 
 const std::string database_filename = "buzzdb.dat";
 
+// Manges the storage operations like write to disk, load. Just like a DBMS engine.
 class StorageManager {
-public:    
+public:
+    // Make sure 
     std::fstream fileStream;
     size_t num_pages = 0;
 

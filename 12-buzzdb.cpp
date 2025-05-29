@@ -15,6 +15,12 @@
 
 enum FieldType { INT, FLOAT, STRING };
 
+// Lecture: Database File Management
+// The general idea is that we now introduce extend pages functionality, the previous operations are all on one page
+// Now we can create new empty pages and flush to disk, then load it back to ensure consistancy
+// Functions like addTuple(), try_to_insert(), loaadedPage are all updated for multiple pages
+// Conclusion: add multiple pages, data consistency by flushing, but delete is 
+
 // Define a basic Field variant class that can hold different types
 class Field {
 public:
@@ -352,6 +358,7 @@ public:
 
     }
 
+    // Extend database file with a new slotted page, write the file to Disk, then load it back
     void extendDatabaseFile() {
         //std::cout << "Extending database file \n";
 
@@ -369,11 +376,14 @@ public:
         // Load page into memory
         auto page_itr = num_pages - 1;
         auto loadedPage = SlottedPage::deserialize(file, page_itr);
+        // load page back into pages
         pages.push_back(std::move(loadedPage));
     }
 
+    // try to insert tuple, if success, flush the changes to database file, if failed, return failed status
     bool try_to_insert(int key, int value){
         bool status = false;
+        // loop through pages, then loop through slots in that page
         for (size_t page_itr = 0; page_itr < num_pages; page_itr++) {
 
             auto newTuple = std::make_unique<Tuple>();
@@ -401,6 +411,8 @@ public:
     }
 
     // insert function
+    // try to insert tuple, if success, flush the changes to database file
+    // if failed, extendDatabase, then try to insert again
     void insert(int key, int value) {
         tuple_insertion_attempt_counter += 1;
 
@@ -410,7 +422,7 @@ public:
 
         bool status = try_to_insert(key, value);
 
-        // Try again after extending the database file
+        // Try again after extending the database file, then it will have another max slot
         if(status == false){
             extendDatabaseFile();
             bool status2 = try_to_insert(key, value);
@@ -420,6 +432,12 @@ public:
         //newTuple->print();
 
         // Skip deleting tuples only once every hundred tuples
+        // TODO: is the delete change applied to disk or is just in memory?
+//         删除操作的完整流程：
+
+// deleteTuple(0) - 在内存中标记槽位为空
+// flush(file, 0) - 将页面数据写入磁盘文件
+// file.flush() - 确保操作系统将缓冲区数据写入磁盘
         if (tuple_insertion_attempt_counter % 100 != 0){
             pages[0]->deleteTuple(0);
             pages[0]->flush(file, 0);

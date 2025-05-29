@@ -15,6 +15,13 @@
 
 enum FieldType { INT, FLOAT, STRING };
 
+// Lecture: Slotted Page
+// TODO: maybe there are some more points I should add?
+// The general idea of this file is to introduce Slotted Page, the benefit of using Slotted Page includes: 
+// 1. no need to do linear scan through the whole page to locate the corresponding data. 
+// 2. Furtue insertions can be inserted into deleted slots.
+// 3. We can define dynamically sized tuple or slot for efficient space usage
+
 // Define a basic Field variant class that can hold different types
 class Field {
 public:
@@ -163,6 +170,7 @@ static constexpr size_t PAGE_SIZE = 4096;  // Fixed page size
 static constexpr size_t MAX_SLOTS = 200;   // Fixed number of slots
 uint16_t INVALID_VALUE = std::numeric_limits<uint16_t>::max(); // Sentinel value
 
+// Slot is in the metadata for a SlottedPage: including if the page is empty, starting offset, and length of the slotted page.
 struct Slot {
     bool empty = true;                 // Is the slot empty?    
     uint16_t offset = INVALID_VALUE;    // Offset of the slot within the page
@@ -170,6 +178,7 @@ struct Slot {
 };
 
 // Slotted Page class
+// Slotted page is an update version of the previous Page class, it also contains metadata "Slot" for efficient modification
 class SlottedPage {
 public:
     std::unique_ptr<char[]> page_data = std::make_unique<char[]>(PAGE_SIZE);
@@ -191,9 +200,12 @@ public:
     }
 
     // Add a tuple, returns true if it fits, false otherwise.
+    // 
+
     bool addTuple(std::unique_ptr<Tuple> tuple) {
 
         // Serialize the tuple into a char array
+        // serialize is basically making it into string version
         auto serializedTuple = tuple->serialize();
         size_t tuple_size = serializedTuple.size();
 
@@ -208,10 +220,14 @@ public:
         }
 
         // Check for first slot with enough space
+        // Insertion logic, iterate through slotts, check empty and enough space
         size_t slot_itr = 0;
         Slot* slot_array = reinterpret_cast<Slot*>(page_data.get());        
         for (; slot_itr < MAX_SLOTS; slot_itr++) {
+            // TODO: checking used slot, where to check new slot then? This is also checking new_slot, because each slot is initialized as max size(INVALID_VALUE)
             if (slot_array[slot_itr].empty == true and 
+                // TODO: when slot_array is empty it still has its length?
+                // Answer: if this slot is used before, we will keep the length and keep it reusable
                 slot_array[slot_itr].length >= tuple_size) {
                 break;
             }
@@ -222,15 +238,19 @@ public:
         }
 
         // Identify the offset where the tuple will be placed in the page
-        // Update slot meta-data if needed
+        // Update slotted meta-data if needed
         slot_array[slot_itr].empty = false;
         size_t offset = INVALID_VALUE;
+        // if current slotted value is not updated yet
         if (slot_array[slot_itr].offset == INVALID_VALUE){
             if(slot_itr != 0){
+                // offset of current slotted array is previous offset + previous length
                 auto prev_slot_offset = slot_array[slot_itr - 1].offset;
+                // slot length is pre-defined, and each slot with have variable length?
                 auto prev_slot_length = slot_array[slot_itr - 1].length;
                 offset = prev_slot_offset + prev_slot_length;
             }
+            // otherwise just append to the end
             else{
                 offset = used_size;
             }
@@ -238,12 +258,36 @@ public:
             slot_array[slot_itr].offset = offset;
         }
         else{
+
             offset = slot_array[slot_itr].offset;
         }
 
         assert(offset != INVALID_VALUE);
         assert(offset >= metadata_size);
         assert(offset < PAGE_SIZE);
+
+        // TODO: dynamically decide slot length here?
+        // Answer: if a slot is brand new unused, set the length to tuple size
+        //         // 场景1：添加新记录
+        // addTuple(tuple1);  // 大小50字节，分配到slot[0]
+        // addTuple(tuple2);  // 大小30字节，分配到slot[1]
+
+        // // Slot状态：
+        // // slot[0]: {empty=false, offset=100, length=50}
+        // // slot[1]: {empty=false, offset=150, length=30}
+
+        // // 场景2：删除记录
+        // deleteTuple(0);  // 删除tuple1
+
+        // // Slot状态：
+        // // slot[0]: {empty=true, offset=100, length=50}  // 保留长度！
+        // // slot[1]: {empty=false, offset=150, length=30}
+
+        // // 场景3：添加新记录
+        // addTuple(tuple3);  // 大小40字节
+
+        // // 由于tuple3(40) <= slot[0].length(50)，可以重用slot[0]
+        // // slot[0]: {empty=false, offset=100, length=50}  // 长度不变
 
         if (slot_array[slot_itr].length == INVALID_VALUE){
             slot_array[slot_itr].length = tuple_size;
@@ -269,6 +313,7 @@ public:
                 slot_array[slot_itr].empty = true;
 
                 // Update page's used size
+                // only reduce the used size, but not change the slot length
                 used_size -= slot_array[slot_itr].length;
                 break;
                }

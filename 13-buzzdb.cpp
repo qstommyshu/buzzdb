@@ -15,6 +15,12 @@
 
 enum FieldType { INT, FLOAT, STRING };
 
+// Lecture: Index Construction
+// The idea of this file:
+// before: we add data to index when we insert data, now we build index by scanning the whole table
+// The index is still key value pair (but this can be changed to b-tree based index as well)
+
+
 // Define a basic Field variant class that can hold different types
 class Field {
 public:
@@ -425,16 +431,22 @@ public:
         }
     }
 
+    // before: we add data to index when we insert data, now we build index by scanning the whole table
+    // The index is still key value pair
     void scanTableToBuildIndex(){
 
         std::cout << "Scanning table to build index \n";
 
+        // loop through pages
         for (size_t page_itr = 0; page_itr < num_pages; page_itr++) {
             char* page_buffer = pages[page_itr]->page_data.get();
             Slot* slot_array = reinterpret_cast<Slot*>(page_buffer);
+
+            // loop through slots
             for (size_t slot_itr = 0; slot_itr < MAX_SLOTS; slot_itr++) {
                 if (slot_array[slot_itr].empty == false){
                     assert(slot_array[slot_itr].offset != INVALID_VALUE);
+                    // access tuple data
                     const char* tuple_data = page_buffer + slot_array[slot_itr].offset;
                     std::istringstream iss(tuple_data);
                     auto loadedTuple = Tuple::deserialize(iss);
