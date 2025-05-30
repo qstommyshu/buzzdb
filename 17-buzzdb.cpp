@@ -18,6 +18,12 @@
 
 enum FieldType { INT, FLOAT, STRING };
 
+// Lecture: Buffer Pool Flooding and 2Q Policy
+// The general idea of this file is introduced TwoQ policy, it uses one FIFO queue and one LRU queue.
+// Pages in LRU queue are more important, we first evict FIFO then think about evicting LRU pages, as they are hot in cache.
+// For touch, we first add page to FIFO queue, if it becomes more important (touched another time), we promote it to LRU, 
+// and then touch follows LRU rules.
+
 // Define a basic Field variant class that can hold different types
 class Field {
 public:
@@ -444,6 +450,7 @@ public:
 };
 
 
+// TwoQPolicy: LRU queue has higher priority than FIFO queue
 class TwoQPolicy : public Policy {
 private:
     size_t cacheSize;
@@ -481,17 +488,20 @@ public:
                 evict();
             }
 
+            // New pages are first addded to FIFO
             // Add page to FIFO
             FIFO.push_back(page_id);
             pageMap[page_id] = std::prev(FIFO.end());
         }
     }
 
+    // evict a page from the two queue, but the LRU eviction part is not used
     PageID evict() {
         printList("FIFO", FIFO);
         printList("LRU", LRU);
 
         PageID evictedPageId = INVALID_VALUE;
+        // if FIFO is not empty, kick out the first page entered to queue.
         if (!FIFO.empty()) {
             evictedPageId = FIFO.front();
             std::cout << "FIFO:: Evicting page " << evictedPageId << "\n";
@@ -538,10 +548,12 @@ public:
             return pageMap.find(page_id)->second;
         }
 
+        // TODO: LRU eviction part will not be used basically
         if (pageMap.size() >= MAX_PAGES_IN_MEMORY) {
             auto evictedPageId = policy->evict();
             if(evictedPageId != INVALID_VALUE){
                 std::cout << "Evicting page " << evictedPageId << "\n";
+                // write evicted dirty page to disk
                 storage_manager.flush(evictedPageId, 
                                       pageMap[evictedPageId]);
             }

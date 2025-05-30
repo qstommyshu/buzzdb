@@ -17,6 +17,13 @@
 
 enum FieldType { INT, FLOAT, STRING };
 
+// Lecture: Buffer Manager and Cache Replacement Policy
+// Cache frequently accessed pages in memory
+// Buffer Manager works with memory, and Storage Manager works with its disk
+
+// The general idea of this file is introducing buffer manager, and so it can reduce some latency for accessing
+// data (store some data in memory/buffer). Buffere manager manage frequently used pages
+
 // Define a basic Field variant class that can hold different types
 class Field {
 public:
@@ -371,24 +378,36 @@ private:
     using PageList = std::list<std::pair<PageID, std::unique_ptr<SlottedPage>>>;
     using PageMap = std::unordered_map<PageID, typename PageList::iterator>;
 
+    // used to load and flush pages, interact with disk
     StorageManager storage_manager;
+    // a list to store LRU of (PageID, Pages), list is in order, first is MRU, last is LRU
     PageList lruList;
+    // page map is used for quickly look up the postion of a specific page with id, I suppose
+    // this can be used to check if a page is in the Buffer/List.
     PageMap pageMap;
 
     void touch(typename PageList::iterator it) {
         // Move page to front of list
         //std::cout << "Moving page " << it->first << " to front of list \n";
+
+        // When a page is used, move the page pointed by "it" to the first location of the list
+        // list.splice(position, source_list, iterator);
         lruList.splice(lruList.begin(), lruList, it); 
     }
 
     void evict() {
+        // 1. get the id of the last page position
+        // lruList.end() gets the last iterator, last-- give access to the iterator points to last position
         auto last = lruList.end();
         last--;
-        int evictedPageId = last->first;
+        int evictedPageId = last->first; // gets the first element in a pair
         std::cout << "Evicting page " << evictedPageId << "\n";
 
+        // 2. write dirty page to disk, as this is cleared from buffer. Buffer stores modifications needs to be frequently accessed
+        // to save time.
         storage_manager.flush(evictedPageId, pageMap[evictedPageId]->second);
 
+        // 3. remove the evict page from the LRU list and map
         pageMap.erase(evictedPageId);
         lruList.pop_back();
     }
@@ -396,25 +415,31 @@ private:
 public:
     BufferManager() {}
 
+    // get a currently need page, if in buffer, get it through map, if not, get it from storage 
+    // manager and add it to LRU page
     std::unique_ptr<SlottedPage>& getPage(int page_id) {
+        // check the buffer
         auto it = pageMap.find(page_id);
         if (it != pageMap.end()) {
             touch(it->second);
             return it->second->second;
         }
 
+        // if page not exist in the buffer
         if (lruList.size() >= MAX_PAGES_IN_MEMORY) {
             evict();
         }
 
         auto page = storage_manager.load(page_id);
         std::cout << "Loading page: " << page_id << "\n";
+        // emplace_front, create an item at the front of the list directly
         lruList.emplace_front(page_id, std::move(page));
         pageMap[page_id] = lruList.begin();
 
         return lruList.begin()->second;
     }
 
+    // write dirty page to disk
     void flushPage(int page_id) {
         //std::cout << "Flush page " << page_id << "\n";
         storage_manager.flush(page_id, pageMap[page_id]->second);
@@ -463,6 +488,7 @@ public:
             newTuple->addField(std::move(float_field));
             newTuple->addField(std::move(string_field));
 
+            // buffer manager manage frequently used pages
             auto& page = buffer_manager.getPage(page_itr);
 
             status = page->addTuple(std::move(newTuple));

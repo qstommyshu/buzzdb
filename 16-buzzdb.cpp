@@ -18,6 +18,13 @@
 
 enum FieldType { INT, FLOAT, STRING };
 
+// Lecture: Policy interface and Policy vs Mechanism
+// The general idea of this file is to abstract out the lru buffer manager policies from previous file, and add a FIFO policy
+// with a polic interface.
+
+// Policy is basically what to do and Mechanism is what to do.
+// Mechanism is how to do.
+
 // Define a basic Field variant class that can hold different types
 class Field {
 public:
@@ -44,6 +51,7 @@ public:
         std::memcpy(data.get(), s.c_str(), data_length);
     }
 
+    // assignment operator
     Field& operator=(const Field& other) {
         if (&other == this) {
             return *this;
@@ -366,18 +374,23 @@ public:
 
 using PageID = uint16_t;
 
+// Policy Interface definition
 class Policy {
 public:
+    // The virtual keyword tells the compiler to use runtime polymorphism instead of compile-time binding for function calls
     virtual void touch(PageID page_id) = 0;
     virtual PageID evict() = 0;
     virtual ~Policy() = default;
 };
 
+// Fifo policy implements Policy interface
 class FifoPolicy : public Policy {
 private:
+    // TODO:no quick map access for fifo policy?
     std::queue<PageID> queue;
 
 public:
+    // touch == use
     void touch(PageID page_id) override {
         // For FIFO, we simply enqueue a newly touched page
         queue.push(page_id);
@@ -404,6 +417,7 @@ private:
     std::unordered_map<PageID, std::list<PageID>::iterator> map;
 
 public:
+    // once used page id, we then need to the LRU page to the front of the LRU list(queue)
     void touch(PageID page_id) override {
         // If page already in the list, remove it
         if (map.find(page_id) != map.end()) {
