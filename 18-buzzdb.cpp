@@ -18,6 +18,10 @@
 
 enum FieldType { INT, FLOAT, STRING };
 
+// Lecture: Database Configuration
+// The general idea of this file is too introduce Database Configurations
+// such as: PAGE_SIZE, MAX_SLOTS, and MAX_PAGES_IN_MEMORY.
+
 // Define a basic Field variant class that can hold different types
 class Field {
 public:
