@@ -21,7 +21,7 @@ enum FieldType { INT, FLOAT, STRING };
 
 // Lecture: Double hashing
 // This lecture introduces quodratic probing and double hashing
-// (Hash(key) + k^2) % table size, double hashing is hash twice: Hash(key) + n * hash2(key)
+// (Hash(key) + k^2) % table size, double hashing is hash twice: Hash(key) + k * hash2(key)
 // quodratic probing spreads the collision, linear probing will make continuous collision cluster together.
 // // // Linear: 连续的位置容易形成聚类
 // positions: 0, 1, 2, 3, 4, 5, 6...
@@ -29,7 +29,7 @@ enum FieldType { INT, FLOAT, STRING };
 // // Quadratic: 跳跃式分布
 // positions: 0, 1, 4, 9, 16, 25..., but still have posibility of secondary clustering
 
-// Double hashing: probing can be more spreaded
+// Double hashing: probing can be more spreaded (Hash(key) + k * hash2(key))
 
 // 使用 Linear Probing 当：
 

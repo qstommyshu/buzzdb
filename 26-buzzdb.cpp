@@ -23,6 +23,7 @@ enum FieldType { INT, FLOAT, STRING };
 // If we don't have this field, and a linear probing field is deleted. When we search for a index, we might encounter a 
 // index with no value and return index not found. Which this behaviour is incorrect, the index might still exists after
 // this slot.
+// TODO: I feel like the position tracking implementation here is incorrect, the position will always be the same as index
 // Check the video is more clear: https://gatech.instructure.com/courses/488320/pages/hash-table-position-tracking?module_item_id=4953688
 
 // Define a basic Field variant class that can hold different types
