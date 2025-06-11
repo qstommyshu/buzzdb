@@ -19,6 +19,42 @@
 
 enum FieldType { INT, FLOAT, STRING };
 
+// Lecture: Double hashing
+// This lecture introduces quodratic probing and double hashing
+// (Hash(key) + k^2) % table size, double hashing is hash twice: Hash(key) + n * hash2(key)
+// quodratic probing spreads the collision, linear probing will make continuous collision cluster together.
+// // // Linear: 连续的位置容易形成聚类
+// positions: 0, 1, 2, 3, 4, 5, 6...
+
+// // Quadratic: 跳跃式分布
+// positions: 0, 1, 4, 9, 16, 25..., but still have posibility of secondary clustering
+
+// Double hashing: probing can be more spreaded
+
+// 使用 Linear Probing 当：
+
+// 负载因子较低（< 0.5）
+// 缓存性能很重要
+// 实现简单性是首要考虑
+
+// 使用 Quadratic Probing 当：
+
+// 需要平衡性能和复杂度
+// 负载因子中等（0.5-0.8）
+// 适合大多数应用场景
+
+// 使用 Double Hashing 当：
+
+// 负载因子较高（> 0.8）
+// 性能是最重要的考虑因素
+// 可以接受额外的计算开销
+
+// 负载因子 = 已使用的槽位数量 / 哈希表总容量
+
+
+// Check the video: https://gatech.instructure.com/courses/488320/pages/double-hashing?module_item_id=4953690
+
+
 // Define a basic Field variant class that can hold different types
 class Field {
 public:

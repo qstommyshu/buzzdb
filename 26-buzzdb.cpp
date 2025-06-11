@@ -18,6 +18,13 @@
 
 enum FieldType { INT, FLOAT, STRING };
 
+// Lecture: Hash Table Position Tracking
+// Introduces HashIndex's exist field, the purpose of this field is to make sure search after deletion is still correct.
+// If we don't have this field, and a linear probing field is deleted. When we search for a index, we might encounter a 
+// index with no value and return index not found. Which this behaviour is incorrect, the index might still exists after
+// this slot.
+// Check the video is more clear: https://gatech.instructure.com/courses/488320/pages/hash-table-position-tracking?module_item_id=4953688
+
 // Define a basic Field variant class that can hold different types
 class Field {
 public:
@@ -494,6 +501,7 @@ private:
     struct HashEntry {
         int key;
         int value;
+        // Track the final position when collision happens
         int position; // Final position within the array
         bool exists; // Flag to check if entry exists
 
@@ -525,6 +533,7 @@ public:
         bool inserted = false;
 
         do {
+            // if the index does not exists (but it may have a value inside just to make sure check doesn't fail)
             if (!hashTable[index].exists) {
                 hashTable[index] = HashEntry(key, value, true);
                 hashTable[index].position = index;
