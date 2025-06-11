@@ -18,6 +18,10 @@
 
 enum FieldType { INT, FLOAT, STRING };
 
+// Lecture: Indexing in C++
+// Introduced map and unordered_map in C++. map implementation under the hood is binary search tree O(log(N))
+// unordered map is a hash map. Not much other info, just introduction
+
 // Define a basic Field variant class that can hold different types
 class Field {
 public:
@@ -487,6 +491,7 @@ public:
 
 class HashIndex {
 private:
+    // tell the index is a hashmap
     std::unordered_map<int, int> hash_index;
 
 public:
@@ -592,16 +597,20 @@ public:
 
         auto num_pages = buffer_manager.getNumPages();
 
+        // loop through pages
         for (size_t page_itr = 0; page_itr < num_pages; page_itr++) {
             auto& page = buffer_manager.getPage(page_itr);
             char* page_buffer = page->page_data.get();
+            // loop through slots in pages
             Slot* slot_array = reinterpret_cast<Slot*>(page_buffer);
             for (size_t slot_itr = 0; slot_itr < MAX_SLOTS; slot_itr++) {
+                // if slot in pages are not empty
                 if (slot_array[slot_itr].empty == false){
                     assert(slot_array[slot_itr].offset != INVALID_VALUE);
                     const char* tuple_data = page_buffer + slot_array[slot_itr].offset;
                     std::istringstream iss(tuple_data);
                     auto loadedTuple = Tuple::deserialize(iss);
+                    // load tuple and insert into the index
                     int key = loadedTuple->fields[0]->asInt();
                     int value = loadedTuple->fields[1]->asInt();
 

@@ -18,6 +18,10 @@
 
 enum FieldType { INT, FLOAT, STRING };
 
+// Lecture: Hash Table
+// The general idea of this file is to introduce a self-implemented hash function, 
+// which uses linear probing when having collisions
+
 // Define a basic Field variant class that can hold different types
 class Field {
 public:
@@ -489,8 +493,10 @@ public:
 #include <vector>
 #include <optional>
 
+// self created hashmap
 class HashIndex {
 private:
+    // each entry of the hash function
     struct HashEntry {
         int key;
         int value;
@@ -512,21 +518,25 @@ public:
         hashTable.resize(capacity);
     }
 
+    // self implemented hash map insert function: linear probing
     void insertOrUpdate(int key, int value) {
         size_t index = hashFunction(key);
         size_t originalIndex = index;
         bool inserted = false;
 
         do {
+            // if current index is not exists yet, insert it
             if (!hashTable[index] || !hashTable[index]->exists) {
                 hashTable[index] = HashEntry{key, value, true};
                 inserted = true;
                 break;
+            // if current index exists and index key == key, add value to current hash table value
             } else if (hashTable[index]->key == key) {
                 hashTable[index]->value += value;
                 inserted = true;
                 break;
             }
+            // Collision case: if index exists but index key != key, increment
             index = (index + 1) % capacity;
         } while (index != originalIndex);
 
