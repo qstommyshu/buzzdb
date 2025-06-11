@@ -29,7 +29,7 @@ enum FieldType { INT, FLOAT, STRING };
 // // Quadratic: 跳跃式分布
 // positions: 0, 1, 4, 9, 16, 25..., but still have posibility of secondary clustering
 
-// Double hashing: probing can be more spreaded (Hash(key) + k * hash2(key))
+// Double hashing: probing can be more spreaded (Hash(key) + k * hash2(key)), hash2 = (1 + key % (table_size - 1))
 
 // 使用 Linear Probing 当：
 
